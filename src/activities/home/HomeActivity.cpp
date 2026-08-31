@@ -38,6 +38,9 @@
 #include "components/themes/lyra/LyraCarouselTheme.h"
 #include "components/themes/minimal/MinimalTheme.h"
 #include "fontIds.h"
+#ifdef Z_CROSSINK_BUILD
+#include "../../plugins/ZPluginManager.h"
+#endif
 
 namespace {
 constexpr uint32_t CAROUSEL_CACHE_MAGIC = 0x43434152;  // "CCAR"
@@ -60,6 +63,9 @@ enum class HomeMenuAction {
   Bookmarks,
   FileTransfer,
   Settings,
+#ifdef Z_CROSSINK_BUILD
+  ZTruyenPlugin,
+#endif
 };
 
 struct HomeMenuEntry {
@@ -69,7 +75,7 @@ struct HomeMenuEntry {
 };
 
 struct HomeMenuEntries {
-  static constexpr int kCapacity = 8;
+  static constexpr int kCapacity = 10;
   std::array<HomeMenuEntry, kCapacity> entries{};
   int count = 0;
 
@@ -275,6 +281,9 @@ void appendHomeMenuItems(HomeMenuEntries& items, bool hasOpdsServers, bool hasRe
     items.push({savedItemsLabel(hasBookmarks, hasClippings), BookmarkIcon, HomeMenuAction::Bookmarks});
   }
 
+#ifdef Z_CROSSINK_BUILD
+  items.push({"Z-Truyen", Book, HomeMenuAction::ZTruyenPlugin});
+#endif
   items.push({tr(STR_FILE_TRANSFER), Transfer, HomeMenuAction::FileTransfer});
   items.push({tr(STR_SETTINGS_TITLE), Settings, HomeMenuAction::Settings});
 }
@@ -1720,6 +1729,15 @@ void HomeActivity::loop() {
       case HomeMenuAction::Settings:
         onSettingsOpen();
         break;
+#ifdef Z_CROSSINK_BUILD
+      case HomeMenuAction::ZTruyenPlugin: {
+        auto plugins = ZPluginManager::getInstance().getHomePlugins();
+        if (!plugins.empty()) {
+          plugins[0]->onHomeMenuAction(activityManager);
+        }
+        break;
+      }
+#endif
     }
   };
 

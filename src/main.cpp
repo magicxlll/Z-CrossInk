@@ -87,6 +87,10 @@ inline esp_sleep_wakeup_cause_t esp_sleep_get_wakeup_cause() { return ESP_SLEEP_
 #include "SilentRestart.h"
 #include "activities/Activity.h"
 #include "activities/ActivityManager.h"
+#ifdef Z_CROSSINK_BUILD
+#include "z_core/ZSafeBootGuard.h"
+#include "plugins/ZPluginManager.h"
+#endif
 #include "activities/home/BookActions.h"
 #include "activities/reader/KOReaderSyncActivity.h"
 #include "activities/reader/ReadingStatsUtils.h"
@@ -1160,6 +1164,12 @@ void setup() {
   }
   UITheme::getInstance().reload();
   ButtonNavigator::setMappedInputManager(mappedInputManager);
+#ifdef Z_CROSSINK_BUILD
+  ZSafeBootGuard::init();
+  if (!ZSafeBootGuard::isSafeMode()) {
+    ZPluginManager::getInstance().init();
+  }
+#endif
   logBootHeap("boot state ready");
   // A silent restart is a process-level recovery rather than a user wake, so
   // retain the current light state. On real wakes, Restore on Wake restores a

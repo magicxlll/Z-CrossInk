@@ -1,0 +1,20 @@
+{
+  "id": "ztruyen",
+  "name": "Z-Truyen Pro",
+  "version": "1.0.0",
+  "author": "Z-Truyen Community",
+  "description": "Kho truyen chu truc tuyen, doc tiep va dong bo KOSync 2 chieu",
+  "category": "HOME_APP",
+  "entry": "main.lua",
+  "icon": "book_open",
+  "enabled": true,
+  "priority": 1,
+  "minFirmwareVersion": "1.5.1",
+  "permissions": [
+    "display",
+    "input",
+    "network",
+    "storage",
+    "reader"
+  ]
+}

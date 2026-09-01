@@ -67,6 +67,14 @@ enum class HomeMenuAction {
   Settings,
 #ifdef Z_CROSSINK_BUILD
   ZTruyenPlugin,
+  Plugin0,
+  Plugin1,
+  Plugin2,
+  Plugin3,
+  Plugin4,
+  Plugin5,
+  Plugin6,
+  Plugin7,
 #endif
 };
 
@@ -77,7 +85,7 @@ struct HomeMenuEntry {
 };
 
 struct HomeMenuEntries {
-  static constexpr int kCapacity = 10;
+  static constexpr int kCapacity = 20;
   std::array<HomeMenuEntry, kCapacity> entries{};
   int count = 0;
 
@@ -284,7 +292,18 @@ void appendHomeMenuItems(HomeMenuEntries& items, bool hasOpdsServers, bool hasRe
   }
 
 #ifdef Z_CROSSINK_BUILD
-  items.push({"Z-Truyen", Book, HomeMenuAction::ZTruyenPlugin});
+  auto plugins = ZPluginManager::getInstance().getHomePlugins();
+  for (size_t i = 0; i < plugins.size() && i < 8; i++) {
+    const auto& manifest = plugins[i]->getManifest();
+    HomeMenuAction act = static_cast<HomeMenuAction>(static_cast<int>(HomeMenuAction::Plugin0) + i);
+    UIIcon ic = Book;
+    if (manifest.id == "sudoku") ic = Chart;
+    else if (manifest.id == "lunar_calendar") ic = Recent;
+    else if (manifest.id == "system_info") ic = Settings;
+    else if (manifest.id == "viet_dict") ic = Library;
+    else if (manifest.id == "ztruyen") ic = Book;
+    items.push({manifest.name.c_str(), ic, act});
+  }
 #endif
   items.push({tr(STR_FILE_TRANSFER), Transfer, HomeMenuAction::FileTransfer});
   items.push({tr(STR_SETTINGS_TITLE), Settings, HomeMenuAction::Settings});
@@ -1559,6 +1578,7 @@ void HomeActivity::loop() {
             break;
           case HomeMenuAction::ContinueReading:
           case HomeMenuAction::Settings:
+          default:
             break;
         }
       };
@@ -1806,6 +1826,18 @@ void HomeActivity::loop() {
         auto plugins = ZPluginManager::getInstance().getHomePlugins();
         if (!plugins.empty()) {
           plugins[0]->onHomeMenuAction(activityManager);
+        }
+        break;
+      }
+      default: {
+        int actVal = static_cast<int>(action);
+        int pluginBase = static_cast<int>(HomeMenuAction::Plugin0);
+        if (actVal >= pluginBase && actVal <= static_cast<int>(HomeMenuAction::Plugin7)) {
+          size_t pIndex = actVal - pluginBase;
+          auto plugins = ZPluginManager::getInstance().getHomePlugins();
+          if (pIndex < plugins.size()) {
+            plugins[pIndex]->onHomeMenuAction(activityManager);
+          }
         }
         break;
       }

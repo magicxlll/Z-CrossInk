@@ -25,6 +25,31 @@ bool ZPluginManifestParser::parse(const std::string& jsonContent, ZPluginManifes
   outManifest.enabled = doc["enabled"] | true;
   outManifest.priority = doc["priority"] | 100;
 
+  // Parse permissions array
+  outManifest.permissions.clear();
+  if (doc["permissions"].is<JsonArray>()) {
+    for (JsonVariant v : doc["permissions"].as<JsonArray>()) {
+      if (v.is<const char*>()) {
+        outManifest.permissions.push_back(v.as<const char*>());
+      }
+    }
+  }
+
+  // Security checks: ID validity and directory traversal prevention
+  if (outManifest.id.empty() || outManifest.name.empty()) {
+    return false;
+  }
+  for (char c : outManifest.id) {
+    if (!isalnum(c) && c != '_' && c != '-') {
+      LOG_ERR("ZPLUGIN", "Invalid plugin ID format: %s", outManifest.id.c_str());
+      return false;
+    }
+  }
+  if (outManifest.entryScript.find("..") != std::string::npos) {
+    LOG_ERR("ZPLUGIN", "Path traversal detected in entry script: %s", outManifest.entryScript.c_str());
+    return false;
+  }
+
   std::string cat = doc["category"] | "home";
   if (cat == "reader" || cat == "READER_TOOL") {
     outManifest.category = ZPluginCategory::READER_TOOL;

@@ -20,9 +20,18 @@ struct ZPluginManifest {
   ZPluginCategory category = ZPluginCategory::HOME_APP;
   std::string entryScript; // Default: "main.lua"
   std::string iconName;    // Vector icon name or bitmap path
+  std::vector<std::string> permissions; // Declared capabilities: display, input, storage, network, reader, system
   bool enabled = true;
   int priority = 100;
   std::string pluginPath;  // Root directory on SD card
+
+  bool hasPermission(const std::string& perm) const {
+    if (permissions.empty()) return true; // Default permissive for MVP/v1.0 if not specified
+    for (const auto& p : permissions) {
+      if (p == perm || p == "all") return true;
+    }
+    return false;
+  }
 };
 
 class ActivityManager;

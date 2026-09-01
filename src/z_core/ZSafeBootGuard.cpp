@@ -63,3 +63,34 @@ void ZSafeBootGuard::clearSafeMode() {
     storage.remove(ZConfig::SAFE_MODE_FLAG_PATH);
   }
 }
+
+namespace {
+std::string g_activePluginLaunch;
+bool g_launchPending = false;
+}
+
+void ZSafeBootGuard::onPluginLaunchStart(const std::string& pluginId) {
+  g_activePluginLaunch = pluginId;
+  g_launchPending = true;
+  LOG_INF("ZSAFE", "Two-stage launch started for plugin: %s", pluginId.c_str());
+}
+
+void ZSafeBootGuard::onPluginLaunchStable(const std::string& pluginId) {
+  if (g_activePluginLaunch == pluginId) {
+    g_launchPending = false;
+    LOG_INF("ZSAFE", "Plugin execution confirmed stable: %s", pluginId.c_str());
+  }
+}
+
+void ZSafeBootGuard::onPluginExit(const std::string& pluginId) {
+  if (g_activePluginLaunch == pluginId) {
+    g_launchPending = false;
+    g_activePluginLaunch.clear();
+    LOG_INF("ZSAFE", "Plugin exited cleanly: %s", pluginId.c_str());
+  }
+}
+
+bool ZSafeBootGuard::isPluginDisabled(const std::string& pluginId) {
+  if (g_isSafeMode) return true;
+  return false;
+}

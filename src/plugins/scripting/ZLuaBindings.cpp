@@ -1,4 +1,5 @@
 #include "ZLuaBindings.h"
+#include "../ZPluginTypes.h"
 
 extern "C" {
 #include <lua.h>
@@ -19,6 +20,17 @@ namespace {
 GfxRenderer* g_renderer = nullptr;
 ActivityManager* g_actMgr = nullptr;
 MappedInputManager* g_inputMgr = nullptr;
+const ZPluginManifest* g_manifest = nullptr;
+
+bool isSafePath(const char* path) {
+  if (!path || path[0] == '\0') return false;
+  std::string p(path);
+  if (p.find("..") != std::string::npos) return false;
+  if (p.find("/.crosspoint") == 0 && p.find("/.crosspoint/plugins") != 0) {
+    return false;
+  }
+  return true;
+}
 
 // ==========================================
 // ZInk.Display Bindings
@@ -57,8 +69,8 @@ int l_display_draw_text(lua_State* L) {
   }
 
   if (g_renderer && text) {
-    int fontId = UI_12_FONT_ID;
-    if (size >= 18) {
+    int fontId = UI_10_FONT_ID;
+    if (size >= 16) {
       fontId = LEXENDDECA_18_FONT_ID;
     } else if (size >= 14) {
       fontId = LEXENDDECA_14_FONT_ID;
@@ -67,6 +79,7 @@ int l_display_draw_text(lua_State* L) {
     } else {
       fontId = UI_10_FONT_ID;
     }
+
     g_renderer->drawText(fontId, x, y, text);
     if (isBold) {
       g_renderer->drawText(fontId, x + 1, y, text);
@@ -80,47 +93,58 @@ int l_display_draw_rect(lua_State* L) {
   int y = (int)luaL_checkinteger(L, 2);
   int w = (int)luaL_checkinteger(L, 3);
   int h = (int)luaL_checkinteger(L, 4);
-  bool filled = lua_toboolean(L, 5);
+  bool fill = lua_toboolean(L, 5);
 
   if (g_renderer) {
-    if (filled) {
-      g_renderer->fillRect(x, y, w, h, 0); // Black
+    if (fill) {
+      g_renderer->fillRect(x, y, w, h, 0); // Black fill
     } else {
-      g_renderer->drawRect(x, y, w, h, 0);
+      g_renderer->drawRect(x, y, w, h, 0); // Black border
     }
   }
   return 0;
 }
 
 int l_display_draw_line(lua_State* L) {
-  int x1 = (int)luaL_checkinteger(L, 1);
-  int y1 = (int)luaL_checkinteger(L, 2);
-  int x2 = (int)luaL_checkinteger(L, 3);
-  int y2 = (int)luaL_checkinteger(L, 4);
+  int x0 = (int)luaL_checkinteger(L, 1);
+  int y0 = (int)luaL_checkinteger(L, 2);
+  int x1 = (int)luaL_checkinteger(L, 3);
+  int y1 = (int)luaL_checkinteger(L, 4);
 
   if (g_renderer) {
-    g_renderer->drawLine(x1, y1, x2, y2, 0);
+    g_renderer->drawLine(x0, y0, x1, y1, 0);
   }
   return 0;
 }
 
 int l_display_get_width(lua_State* L) {
-  int w = g_renderer ? g_renderer->getDisplayWidth() : 528;
+  int w = g_renderer ? g_renderer->getScreenWidth() : 528;
   lua_pushinteger(L, w);
   return 1;
 }
 
 int l_display_get_height(lua_State* L) {
-  int h = g_renderer ? g_renderer->getDisplayHeight() : 792;
+  int h = g_renderer ? g_renderer->getScreenHeight() : 792;
   lua_pushinteger(L, h);
   return 1;
 }
 
 // ==========================================
-// ZInk.Storage Bindings
+// ZInk.Storage Bindings (Sandboxed & Checked)
 // ==========================================
 int l_storage_read_file(lua_State* L) {
   const char* path = luaL_checkstring(L, 1);
+  if (!isSafePath(path)) {
+    LOG_ERR("ZLUA", "Read access denied: unsafe path '%s'", path);
+    lua_pushnil(L);
+    return 1;
+  }
+  if (g_manifest && !g_manifest->hasPermission("storage")) {
+    LOG_ERR("ZLUA", "Permission denied: plugin '%s' does not have 'storage' permission", g_manifest->id.c_str());
+    lua_pushnil(L);
+    return 1;
+  }
+
   HalStorage storage;
   if (!storage.exists(path)) {
     lua_pushnil(L);
@@ -148,6 +172,17 @@ int l_storage_write_file(lua_State* L) {
   size_t len = 0;
   const char* data = luaL_checklstring(L, 2, &len);
 
+  if (!isSafePath(path)) {
+    LOG_ERR("ZLUA", "Write access denied: unsafe path '%s'", path);
+    lua_pushboolean(L, false);
+    return 1;
+  }
+  if (g_manifest && !g_manifest->hasPermission("storage")) {
+    LOG_ERR("ZLUA", "Permission denied: plugin '%s' does not have 'storage' permission", g_manifest->id.c_str());
+    lua_pushboolean(L, false);
+    return 1;
+  }
+
   HalStorage storage;
   auto f = storage.open(path, O_WRONLY | O_CREAT | O_TRUNC);
   if (!f) {
@@ -162,6 +197,10 @@ int l_storage_write_file(lua_State* L) {
 
 int l_storage_exists(lua_State* L) {
   const char* path = luaL_checkstring(L, 1);
+  if (!isSafePath(path)) {
+    lua_pushboolean(L, false);
+    return 1;
+  }
   HalStorage storage;
   lua_pushboolean(L, storage.exists(path));
   return 1;
@@ -182,7 +221,6 @@ int l_system_get_battery_percent(lua_State* L) {
 
 int l_system_get_battery_mv(lua_State* L) {
 #if !defined(SIMULATOR)
-  // Standard LiPo voltage estimation based on percentage
   uint16_t pct = powerManager.getBatteryPercentage();
   uint16_t mv = 3300 + (pct * 9); // ~3300mV to 4200mV
   lua_pushinteger(L, mv);
@@ -193,11 +231,7 @@ int l_system_get_battery_mv(lua_State* L) {
 }
 
 int l_system_is_charging(lua_State* L) {
-#if !defined(SIMULATOR)
   lua_pushboolean(L, false);
-#else
-  lua_pushboolean(L, false);
-#endif
   return 1;
 }
 
@@ -238,7 +272,6 @@ int l_system_get_device_model(lua_State* L) {
 }
 
 int l_system_get_temperature(lua_State* L) {
-  // Safe estimated CPU/board operating temperature in Celsius
   lua_pushnumber(L, 31.5);
   return 1;
 }
@@ -254,6 +287,33 @@ int l_system_get_storage_free_kb(lua_State* L) {
 }
 
 // ==========================================
+// ZInk.Http Network Bindings (Sandboxed)
+// ==========================================
+int l_http_get(lua_State* L) {
+  const char* url = luaL_checkstring(L, 1);
+  if (g_manifest && !g_manifest->hasPermission("network")) {
+    LOG_ERR("ZLUA", "Permission denied: plugin '%s' does not have 'network' permission", g_manifest->id.c_str());
+    lua_pushnil(L);
+    return 1;
+  }
+  // Safe mock response for Simulator & basic HTTP verification
+  lua_pushstring(L, "{\"status\":\"ok\",\"response\":\"connected\"}");
+  return 1;
+}
+
+int l_http_post(lua_State* L) {
+  const char* url = luaL_checkstring(L, 1);
+  const char* body = luaL_optstring(L, 2, "");
+  if (g_manifest && !g_manifest->hasPermission("network")) {
+    LOG_ERR("ZLUA", "Permission denied: plugin '%s' does not have 'network' permission", g_manifest->id.c_str());
+    lua_pushnil(L);
+    return 1;
+  }
+  lua_pushstring(L, "{\"status\":\"ok\",\"received\":true}");
+  return 1;
+}
+
+// ==========================================
 // ZInk.UI & Reader Bindings
 // ==========================================
 int l_ui_pop_view(lua_State* L) {
@@ -265,6 +325,14 @@ int l_ui_pop_view(lua_State* L) {
 
 int l_reader_open_book(lua_State* L) {
   const char* path = luaL_checkstring(L, 1);
+  if (!isSafePath(path)) {
+    LOG_ERR("ZLUA", "Reader open denied: unsafe path '%s'", path);
+    return 0;
+  }
+  if (g_manifest && !g_manifest->hasPermission("reader")) {
+    LOG_ERR("ZLUA", "Permission denied: plugin '%s' does not have 'reader' permission", g_manifest->id.c_str());
+    return 0;
+  }
   if (g_actMgr && path) {
     g_actMgr->goToReader(path);
   }
@@ -272,14 +340,15 @@ int l_reader_open_book(lua_State* L) {
 }
 } // namespace
 
-void ZLuaBindings::setCurrentContext(GfxRenderer* renderer, ActivityManager* actMgr, MappedInputManager* inputMgr) {
+void ZLuaBindings::setCurrentContext(GfxRenderer* renderer, ActivityManager* actMgr, MappedInputManager* inputMgr, const ZPluginManifest* manifest) {
   g_renderer = renderer;
   g_actMgr = actMgr;
   g_inputMgr = inputMgr;
+  g_manifest = manifest;
 }
 
 void ZLuaBindings::registerAll(lua_State* L, GfxRenderer* renderer, ActivityManager* actMgr, MappedInputManager* inputMgr) {
-  setCurrentContext(renderer, actMgr, inputMgr);
+  setCurrentContext(renderer, actMgr, inputMgr, nullptr);
 
   // Global table: ZInk
   lua_newtable(L);
@@ -339,6 +408,14 @@ void ZLuaBindings::registerAll(lua_State* L, GfxRenderer* renderer, ActivityMana
   lua_pushcfunction(L, l_system_get_storage_free_kb);
   lua_setfield(L, -2, "getStorageFreeKB");
   lua_setfield(L, -2, "System");
+
+  // ZInk.Http
+  lua_newtable(L);
+  lua_pushcfunction(L, l_http_get);
+  lua_setfield(L, -2, "get");
+  lua_pushcfunction(L, l_http_post);
+  lua_setfield(L, -2, "post");
+  lua_setfield(L, -2, "Http");
 
   // ZInk.UI
   lua_newtable(L);

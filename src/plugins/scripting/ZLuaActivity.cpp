@@ -1,6 +1,7 @@
 #include "ZLuaActivity.h"
 #include "ZLuaBindings.h"
 #include "../../fontIds.h"
+#include "../../z_core/ZSafeBootGuard.h"
 #include <Logging.h>
 
 ZLuaActivity::ZLuaActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
@@ -13,7 +14,8 @@ ZLuaActivity::ZLuaActivity(GfxRenderer& renderer, MappedInputManager& mappedInpu
 
 void ZLuaActivity::onEnter() {
   Activity::onEnter();
-  ZLuaBindings::setCurrentContext(&renderer, &activityManager, &mappedInput);
+  ZSafeBootGuard::onPluginLaunchStart(manifest.id);
+  ZLuaBindings::setCurrentContext(&renderer, &activityManager, &mappedInput, &manifest);
 
   if (engine->init()) {
     if (!scriptPath.empty()) {
@@ -23,6 +25,7 @@ void ZLuaActivity::onEnter() {
       } else {
         scriptLoaded = true;
         engine->callFunction("onEnter");
+        ZSafeBootGuard::onPluginLaunchStable(manifest.id);
       }
     }
   }
@@ -30,6 +33,7 @@ void ZLuaActivity::onEnter() {
 }
 
 void ZLuaActivity::onExit() {
+  ZSafeBootGuard::onPluginExit(manifest.id);
   if (engine && scriptLoaded) {
     engine->callFunction("onExit");
     engine->shutdown();
@@ -38,7 +42,7 @@ void ZLuaActivity::onExit() {
 }
 
 void ZLuaActivity::render(RenderLock&& lock) {
-  ZLuaBindings::setCurrentContext(&renderer, &activityManager, &mappedInput);
+  ZLuaBindings::setCurrentContext(&renderer, &activityManager, &mappedInput, &manifest);
   if (engine && scriptLoaded) {
     engine->callFunction("onRender");
   } else {

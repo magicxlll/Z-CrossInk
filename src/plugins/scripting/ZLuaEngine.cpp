@@ -1,7 +1,9 @@
 #include "ZLuaEngine.h"
 #include "ZLuaBindings.h"
+#include <HalStorage.h>
 #include <Logging.h>
 #include <cstdlib>
+#include <vector>
 
 extern "C" {
 #include <lua.h>
@@ -98,13 +100,41 @@ bool ZLuaEngine::runString(const std::string& script) {
 bool ZLuaEngine::runFile(const std::string& filePath) {
   if (!isInitialized && !init()) return false;
 
-  int status = luaL_dofile(L, filePath.c_str());
-  if (status != LUA_OK) {
+  HalStorage storage;
+  auto f = storage.open(filePath.c_str(), O_RDONLY);
+  if (!f || !f.isOpen()) {
+    LOG_ERR("ZLUA", "Cannot open Lua script file: %s", filePath.c_str());
+    return false;
+  }
+
+  size_t size = f.fileSize();
+  if (size == 0) {
+    LOG_ERR("ZLUA", "Lua script file is empty: %s", filePath.c_str());
+    f.close();
+    return false;
+  }
+
+  std::vector<char> buffer(size + 1);
+  size_t bytesRead = f.read(buffer.data(), size);
+  buffer[bytesRead] = '\0';
+  f.close();
+
+  int loadStatus = luaL_loadbuffer(L, buffer.data(), bytesRead, filePath.c_str());
+  if (loadStatus != LUA_OK) {
     const char* err = lua_tostring(L, -1);
-    LOG_ERR("ZLUA", "Lua dofile error (%s): %s", filePath.c_str(), err ? err : "unknown");
+    LOG_ERR("ZLUA", "Lua syntax error in (%s): %s", filePath.c_str(), err ? err : "unknown");
     lua_pop(L, 1);
     return false;
   }
+
+  int runStatus = lua_pcall(L, 0, LUA_MULTRET, 0);
+  if (runStatus != LUA_OK) {
+    const char* err = lua_tostring(L, -1);
+    LOG_ERR("ZLUA", "Lua execution error in (%s): %s", filePath.c_str(), err ? err : "unknown");
+    lua_pop(L, 1);
+    return false;
+  }
+
   return true;
 }
 

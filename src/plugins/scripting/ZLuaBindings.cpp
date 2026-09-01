@@ -34,11 +34,20 @@ int l_display_draw_text(lua_State* L) {
   int x = (int)luaL_checkinteger(L, 1);
   int y = (int)luaL_checkinteger(L, 2);
   const char* text = luaL_checkstring(L, 3);
-  int size = (int)luaL_optinteger(L, 5, 12);
+  int size = (int)luaL_optinteger(L, 4, 12);
 
   if (g_renderer && text) {
-    // Default to UI 12pt font
-    g_renderer->drawText(UI_12_FONT_ID, x, y, text);
+    int fontId = UI_12_FONT_ID;
+    if (size >= 18) {
+      fontId = LEXENDDECA_18_FONT_ID;
+    } else if (size >= 14) {
+      fontId = LEXENDDECA_14_FONT_ID;
+    } else if (size >= 12) {
+      fontId = UI_12_FONT_ID;
+    } else {
+      fontId = UI_10_FONT_ID;
+    }
+    g_renderer->drawText(fontId, x, y, text);
   }
   return 0;
 }

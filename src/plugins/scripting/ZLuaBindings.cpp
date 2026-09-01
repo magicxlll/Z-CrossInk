@@ -34,7 +34,27 @@ int l_display_draw_text(lua_State* L) {
   int x = (int)luaL_checkinteger(L, 1);
   int y = (int)luaL_checkinteger(L, 2);
   const char* text = luaL_checkstring(L, 3);
-  int size = (int)luaL_optinteger(L, 4, 12);
+  int size = 12;
+  bool isBold = false;
+
+  // Flexible argument check for arguments 4 & 5
+  if (lua_isinteger(L, 4) || lua_isnumber(L, 4)) {
+    size = (int)lua_tointeger(L, 4);
+    if (lua_isstring(L, 5)) {
+      const char* style = lua_tostring(L, 5);
+      if (style && (strcmp(style, "BOLD") == 0 || strcmp(style, "bold") == 0)) {
+        isBold = true;
+      }
+    }
+  } else if (lua_isstring(L, 4)) {
+    const char* style = lua_tostring(L, 4);
+    if (style && (strcmp(style, "BOLD") == 0 || strcmp(style, "bold") == 0)) {
+      isBold = true;
+    }
+    if (lua_isinteger(L, 5) || lua_isnumber(L, 5)) {
+      size = (int)lua_tointeger(L, 5);
+    }
+  }
 
   if (g_renderer && text) {
     int fontId = UI_12_FONT_ID;
@@ -48,6 +68,9 @@ int l_display_draw_text(lua_State* L) {
       fontId = UI_10_FONT_ID;
     }
     g_renderer->drawText(fontId, x, y, text);
+    if (isBold) {
+      g_renderer->drawText(fontId, x + 1, y, text);
+    }
   }
   return 0;
 }

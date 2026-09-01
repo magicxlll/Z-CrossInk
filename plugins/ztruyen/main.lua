@@ -58,11 +58,11 @@ function onInput(key, eventType)
         return false
     end
 
-    if key == "LEFT" or key == "VOL_DOWN" then
+    if key == "UP" or key == "LEFT" or key == "VOL_DOWN" then
         selectedIndex = selectedIndex - 1
         if selectedIndex < 1 then selectedIndex = #menuItems end
         return true
-    elseif key == "RIGHT" or key == "VOL_UP" then
+    elseif key == "DOWN" or key == "RIGHT" or key == "VOL_UP" then
         selectedIndex = selectedIndex + 1
         if selectedIndex > #menuItems then selectedIndex = 1 end
         return true

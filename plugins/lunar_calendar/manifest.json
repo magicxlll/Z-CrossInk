@@ -1,0 +1,12 @@
+{
+  "id": "lunar_calendar",
+  "name": "Lich Van Nien & Am Lich",
+  "version": "1.0.0",
+  "author": "Z-Truyen Community",
+  "description": "Lịch vạn niên Âm - Dương lịch Việt Nam kèm can chi, tiết khí và danh ngôn đọc sách mỗi ngày.",
+  "category": "HOME_APP",
+  "entry": "main.lua",
+  "icon": "calendar",
+  "priority": 12,
+  "enabled": true
+}

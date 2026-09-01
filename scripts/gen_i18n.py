@@ -999,7 +999,7 @@ if __name__ == "__main__":
 else:
     try:
         Import("env")
-        main(strip_unused=True)
+        main(strip_unused=False)
         keys_path = Path("lib/I18n/I18nKeys.h")
         layout_hash = hashlib.sha256(keys_path.read_bytes()).hexdigest()[:16]
         # StrId values are compiled into every tr(...) call. Include the

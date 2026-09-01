@@ -12,7 +12,7 @@ ZLuaActivity::ZLuaActivity(GfxRenderer& renderer, MappedInputManager& mappedInpu
 
 void ZLuaActivity::onEnter() {
   Activity::onEnter();
-  ZLuaBindings::setCurrentContext(&renderer, nullptr, &mappedInput);
+  ZLuaBindings::setCurrentContext(&renderer, &activityManager, &mappedInput);
 
   if (engine->init()) {
     if (!scriptPath.empty()) {
@@ -32,7 +32,7 @@ void ZLuaActivity::onExit() {
 }
 
 void ZLuaActivity::render(RenderLock&& lock) {
-  ZLuaBindings::setCurrentContext(&renderer, nullptr, &mappedInput);
+  ZLuaBindings::setCurrentContext(&renderer, &activityManager, &mappedInput);
   if (engine) {
     engine->callFunction("onRender");
   }

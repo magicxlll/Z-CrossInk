@@ -40,11 +40,12 @@ bool ZPluginManifestParser::parse(const std::string& jsonContent, ZPluginManifes
 }
 
 bool ZPluginManifestParser::loadFromFile(const std::string& filePath, ZPluginManifest& outManifest) {
+  HalStorage storage;
   if (!storage.exists(filePath.c_str())) {
     return false;
   }
 
-  auto file = storage.open(filePath.c_str(), "r");
+  auto file = storage.open(filePath.c_str(), O_RDONLY);
   if (!file) {
     LOG_ERR("ZPLUGIN", "Failed to open manifest file: %s", filePath.c_str());
     return false;

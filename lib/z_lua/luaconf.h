@@ -8,8 +8,14 @@
 #ifndef luaconf_h
 #define luaconf_h
 
+#ifdef __cplusplus
+#include <climits>
+#include <cstdint>
+#include <cstddef>
+#endif
 #include <limits.h>
 #include <stddef.h>
+#include <stdint.h>
 
 
 /*
@@ -122,7 +128,9 @@
 /*
 @@ LUA_32BITS enables Lua with 32-bit integers and 32-bit floats.
 */
-#define LUA_32BITS	0
+#ifndef LUA_32BITS
+#define LUA_32BITS	1
+#endif
 
 
 /*

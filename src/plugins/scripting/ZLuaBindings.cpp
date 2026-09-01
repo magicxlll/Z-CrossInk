@@ -9,7 +9,9 @@ extern "C" {
 #include <GfxRenderer.h>
 #include <HalStorage.h>
 #include <HalDisplay.h>
+#include <HalPowerManager.h>
 #include <Logging.h>
+#include "../../activities/Activity.h"
 #include "../../activities/ActivityManager.h"
 #include "../../fontIds.h"
 
@@ -35,8 +37,8 @@ int l_display_draw_text(lua_State* L) {
   int size = (int)luaL_optinteger(L, 5, 12);
 
   if (g_renderer && text) {
-    // Default to medium font size
-    g_renderer->drawText(UIFontId::Default, x, y, text);
+    // Default to UI 12pt font
+    g_renderer->drawText(UI_12_FONT_ID, x, y, text);
   }
   return 0;
 }
@@ -87,11 +89,12 @@ int l_display_get_height(lua_State* L) {
 // ==========================================
 int l_storage_read_file(lua_State* L) {
   const char* path = luaL_checkstring(L, 1);
+  HalStorage storage;
   if (!storage.exists(path)) {
     lua_pushnil(L);
     return 1;
   }
-  auto f = storage.open(path, "r");
+  auto f = storage.open(path, O_RDONLY);
   if (!f) {
     lua_pushnil(L);
     return 1;
@@ -113,7 +116,8 @@ int l_storage_write_file(lua_State* L) {
   size_t len = 0;
   const char* data = luaL_checklstring(L, 2, &len);
 
-  auto f = storage.open(path, "w");
+  HalStorage storage;
+  auto f = storage.open(path, O_WRONLY | O_CREAT | O_TRUNC);
   if (!f) {
     lua_pushboolean(L, false);
     return 1;
@@ -126,6 +130,7 @@ int l_storage_write_file(lua_State* L) {
 
 int l_storage_exists(lua_State* L) {
   const char* path = luaL_checkstring(L, 1);
+  HalStorage storage;
   lua_pushboolean(L, storage.exists(path));
   return 1;
 }

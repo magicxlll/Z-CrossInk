@@ -2,6 +2,7 @@
 #include "ZPluginManifest.h"
 #include "ZLuaPlugin.h"
 #include "../z_core/ZSafeBootGuard.h"
+#include "ZConfig.h"
 #include <HalStorage.h>
 #include <Logging.h>
 #include <algorithm>
@@ -15,7 +16,7 @@ void ZPluginManager::init() {
   if (initialized) return;
 
   if (ZSafeBootGuard::isSafeMode()) {
-    LOG_WRN("ZPLUGIN", "Safe Mode is active. Skipping dynamic plugin scanning.");
+    LOG_INF("ZPLUGIN", "Safe Mode is active. Skipping dynamic plugin scanning.");
     initialized = true;
     return;
   }
@@ -25,6 +26,7 @@ void ZPluginManager::init() {
 }
 
 void ZPluginManager::scanDirectory(const char* dirPath) {
+  HalStorage storage;
   if (!storage.exists(dirPath)) {
     return;
   }
@@ -39,7 +41,8 @@ void ZPluginManager::scanDirectory(const char* dirPath) {
     if (!entry) break;
 
     if (entry.isDirectory()) {
-      std::string subDirName = entry.name();
+      char subDirName[128] = {};
+      entry.getName(subDirName, sizeof(subDirName));
       std::string manifestPath = std::string(dirPath) + "/" + subDirName + "/manifest.json";
 
       if (storage.exists(manifestPath.c_str())) {

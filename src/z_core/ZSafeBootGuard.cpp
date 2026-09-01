@@ -28,17 +28,18 @@ void ZSafeBootGuard::init() {
 
   // 2. Check Hardware Key (Back button held during power-on wake)
   #ifndef SIMULATOR
-  if (gpio.isBackPressed()) {
+  if (gpio.isPressed(HalGPIO::BTN_BACK)) {
     g_isSafeMode = true;
-    LOG_WRN("ZSAFE", "Back button held during power-on. Safe Mode activated by user.");
+    LOG_INF("ZSAFE", "Back button held during power-on. Safe Mode activated by user.");
     return;
   }
   #endif
 
   // 3. Check SD card explicit flag file
+  HalStorage storage;
   if (storage.exists(ZConfig::SAFE_MODE_FLAG_PATH)) {
     g_isSafeMode = true;
-    LOG_WRN("ZSAFE", "Safe Mode flag file found on SD card: %s", ZConfig::SAFE_MODE_FLAG_PATH);
+    LOG_INF("ZSAFE", "Safe Mode flag file found on SD card: %s", ZConfig::SAFE_MODE_FLAG_PATH);
   }
 }
 
@@ -57,6 +58,7 @@ void ZSafeBootGuard::recordCrash() {
 void ZSafeBootGuard::clearSafeMode() {
   g_isSafeMode = false;
   rtcCrashCount = 0;
+  HalStorage storage;
   if (storage.exists(ZConfig::SAFE_MODE_FLAG_PATH)) {
     storage.remove(ZConfig::SAFE_MODE_FLAG_PATH);
   }

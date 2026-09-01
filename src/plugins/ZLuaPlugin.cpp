@@ -23,8 +23,7 @@ bool ZLuaPlugin::onHomeMenuAction(ActivityManager& actMgr) {
   std::string fullEntryPath = manifest.pluginPath + "/" + manifest.entryScript;
   LOG_INF("ZPLUGIN", "Launching Lua Home Activity: %s", fullEntryPath.c_str());
 
-  // Note: renderer and mappedInput are provided via ActivityManager
-  // actMgr.pushActivity(std::make_unique<ZLuaActivity>(...));
+  actMgr.pushActivity(std::make_unique<ZLuaActivity>(actMgr.getRenderer(), actMgr.getMappedInput(), manifest, fullEntryPath));
   return true;
 }
 

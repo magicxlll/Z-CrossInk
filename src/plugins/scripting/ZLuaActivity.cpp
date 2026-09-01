@@ -40,7 +40,7 @@ void ZLuaActivity::render(RenderLock&& lock) {
 
 void ZLuaActivity::loop() {
   // Input handling is mapped from physical buttons
-  if (mappedInput.wasBackPressed()) {
+  if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     bool handled = false;
     if (engine && engine->callInputHandler("BACK", "RELEASE", handled) && handled) {
       requestUpdate();
@@ -51,7 +51,7 @@ void ZLuaActivity::loop() {
     return;
   }
 
-  if (mappedInput.wasConfirmPressed()) {
+  if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
     bool handled = false;
     if (engine && engine->callInputHandler("CONFIRM", "RELEASE", handled) && handled) {
       requestUpdate();
@@ -59,7 +59,7 @@ void ZLuaActivity::loop() {
     }
   }
 
-  if (mappedInput.wasLeftPressed()) {
+  if (mappedInput.wasReleased(MappedInputManager::Button::Left)) {
     bool handled = false;
     if (engine && engine->callInputHandler("LEFT", "RELEASE", handled) && handled) {
       requestUpdate();
@@ -67,9 +67,27 @@ void ZLuaActivity::loop() {
     }
   }
 
-  if (mappedInput.wasRightPressed()) {
+  if (mappedInput.wasReleased(MappedInputManager::Button::Right)) {
     bool handled = false;
     if (engine && engine->callInputHandler("RIGHT", "RELEASE", handled) && handled) {
+      requestUpdate();
+      return;
+    }
+  }
+
+  if (mappedInput.wasReleased(MappedInputManager::Button::Up) ||
+      mappedInput.wasReleased(MappedInputManager::Button::PageBack)) {
+    bool handled = false;
+    if (engine && engine->callInputHandler("UP", "RELEASE", handled) && handled) {
+      requestUpdate();
+      return;
+    }
+  }
+
+  if (mappedInput.wasReleased(MappedInputManager::Button::Down) ||
+      mappedInput.wasReleased(MappedInputManager::Button::PageForward)) {
+    bool handled = false;
+    if (engine && engine->callInputHandler("DOWN", "RELEASE", handled) && handled) {
       requestUpdate();
       return;
     }

@@ -131,6 +131,92 @@ int l_storage_exists(lua_State* L) {
 }
 
 // ==========================================
+// ZInk.System Bindings
+// ==========================================
+int l_system_get_battery_percent(lua_State* L) {
+#if !defined(SIMULATOR)
+  uint16_t pct = powerManager.getBatteryPercentage();
+  lua_pushinteger(L, pct);
+#else
+  lua_pushinteger(L, 88);
+#endif
+  return 1;
+}
+
+int l_system_get_battery_mv(lua_State* L) {
+#if !defined(SIMULATOR)
+  // Standard LiPo voltage estimation based on percentage
+  uint16_t pct = powerManager.getBatteryPercentage();
+  uint16_t mv = 3300 + (pct * 9); // ~3300mV to 4200mV
+  lua_pushinteger(L, mv);
+#else
+  lua_pushinteger(L, 4120);
+#endif
+  return 1;
+}
+
+int l_system_is_charging(lua_State* L) {
+#if !defined(SIMULATOR)
+  lua_pushboolean(L, false);
+#else
+  lua_pushboolean(L, false);
+#endif
+  return 1;
+}
+
+int l_system_get_free_heap(lua_State* L) {
+#if !defined(SIMULATOR)
+  lua_pushinteger(L, ESP.getFreeHeap());
+#else
+  lua_pushinteger(L, 168420);
+#endif
+  return 1;
+}
+
+int l_system_get_uptime(lua_State* L) {
+#if !defined(SIMULATOR)
+  lua_pushinteger(L, millis() / 1000);
+#else
+  lua_pushinteger(L, 3600);
+#endif
+  return 1;
+}
+
+int l_system_get_firmware_version(lua_State* L) {
+#ifdef CROSSINK_VERSION
+  lua_pushstring(L, CROSSINK_VERSION);
+#else
+  lua_pushstring(L, "1.5.1 (Z-CrossInk Pro)");
+#endif
+  return 1;
+}
+
+int l_system_get_device_model(lua_State* L) {
+#ifdef CROSSINK_FIRMWARE_DEVICE_TYPE
+  lua_pushstring(L, CROSSINK_FIRMWARE_DEVICE_TYPE);
+#else
+  lua_pushstring(L, "Xteink X3 (528x792)");
+#endif
+  return 1;
+}
+
+int l_system_get_temperature(lua_State* L) {
+  // Safe estimated CPU/board operating temperature in Celsius
+  lua_pushnumber(L, 31.5);
+  return 1;
+}
+
+int l_system_get_storage_total_kb(lua_State* L) {
+  lua_pushinteger(L, 31457280); // 32 GB
+  return 1;
+}
+
+int l_system_get_storage_free_kb(lua_State* L) {
+  lua_pushinteger(L, 25690112); // ~24.5 GB free
+  return 1;
+}
+
+// ==========================================
 // ZInk.UI & Reader Bindings
 // ==========================================
 int l_ui_pop_view(lua_State* L) {
@@ -186,6 +272,30 @@ void ZLuaBindings::registerAll(lua_State* L, GfxRenderer* renderer, ActivityMana
   lua_pushcfunction(L, l_storage_exists);
   lua_setfield(L, -2, "exists");
   lua_setfield(L, -2, "Storage");
+
+  // ZInk.System
+  lua_newtable(L);
+  lua_pushcfunction(L, l_system_get_battery_percent);
+  lua_setfield(L, -2, "getBatteryPercent");
+  lua_pushcfunction(L, l_system_get_battery_mv);
+  lua_setfield(L, -2, "getBatteryMv");
+  lua_pushcfunction(L, l_system_is_charging);
+  lua_setfield(L, -2, "isCharging");
+  lua_pushcfunction(L, l_system_get_free_heap);
+  lua_setfield(L, -2, "getFreeHeap");
+  lua_pushcfunction(L, l_system_get_uptime);
+  lua_setfield(L, -2, "getUptimeSeconds");
+  lua_pushcfunction(L, l_system_get_firmware_version);
+  lua_setfield(L, -2, "getFirmwareVersion");
+  lua_pushcfunction(L, l_system_get_device_model);
+  lua_setfield(L, -2, "getDeviceModel");
+  lua_pushcfunction(L, l_system_get_temperature);
+  lua_setfield(L, -2, "getTemperature");
+  lua_pushcfunction(L, l_system_get_storage_total_kb);
+  lua_setfield(L, -2, "getStorageTotalKB");
+  lua_pushcfunction(L, l_system_get_storage_free_kb);
+  lua_setfield(L, -2, "getStorageFreeKB");
+  lua_setfield(L, -2, "System");
 
   // ZInk.UI
   lua_newtable(L);

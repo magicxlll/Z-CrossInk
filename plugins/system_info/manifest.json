@@ -1,0 +1,18 @@
+{
+  "id": "system_info",
+  "name": "Chẩn Đoán Phần Cứng",
+  "version": "1.0.0",
+  "author": "Z-CrossInk Community",
+  "description": "Chan doan phan cung E-ink: pin, nhiet do, bo nho SD, RAM heap va firmware",
+  "category": "HOME_APP",
+  "entry": "main.lua",
+  "icon": "cpu",
+  "enabled": true,
+  "priority": 3,
+  "minFirmwareVersion": "1.5.1",
+  "permissions": [
+    "display",
+    "input",
+    "storage"
+  ]
+}

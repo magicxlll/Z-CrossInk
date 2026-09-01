@@ -182,7 +182,19 @@ The embedded sandbox exposes safe, memory-controlled C++ functions under the glo
 - `ZInk.Reader.getCurrentBookPath()`: Returns path of current/last opened book.
 - `ZInk.Reader.syncProgress(serverUrl, user, pass)`: Triggers KOReader 2-way sync.
 
-### 6. `ZInk.UI` (Dialogs & Navigation)
+### 6. `ZInk.System` (Hardware Telemetry & System Diagnostics)
+- `ZInk.System.getBatteryPercent()`: Returns battery level integer `0` - `100`.
+- `ZInk.System.getBatteryMv()`: Returns estimated or measured battery voltage in millivolts (e.g. `4120`).
+- `ZInk.System.isCharging()`: Returns `true` if currently charging via USB-C.
+- `ZInk.System.getFreeHeap()`: Returns available heap memory in bytes.
+- `ZInk.System.getUptimeSeconds()`: Returns system uptime since boot in seconds.
+- `ZInk.System.getFirmwareVersion()`: Returns current Z-CrossInk firmware version string.
+- `ZInk.System.getDeviceModel()`: Returns device model string (e.g. `"Xteink X3 (528x792)"`).
+- `ZInk.System.getTemperature()`: Returns board/CPU temperature in Celsius.
+- `ZInk.System.getStorageTotalKB()`: Returns total SD card capacity in KB.
+- `ZInk.System.getStorageFreeKB()`: Returns remaining free SD card space in KB.
+
+### 7. `ZInk.UI` (Dialogs & Navigation)
 - `ZInk.UI.showToast(message, durationMs)`: Shows bottom floating toast notice.
 - `ZInk.UI.showDialog(title, message, buttons)`: Displays modal alert.
 - `ZInk.UI.popView()`: Closes current plugin screen and returns to previous activity.

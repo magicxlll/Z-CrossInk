@@ -1,0 +1,18 @@
+{
+  "id": "viet_dict",
+  "name": "Từ Điển Việt - Anh",
+  "version": "1.0.0",
+  "author": "Z-CrossInk Community",
+  "description": "Tu dien Viet - Anh offline tra cuu nhanh toi uu cho man hinh E-ink X3",
+  "category": "HOME_APP",
+  "entry": "main.lua",
+  "icon": "book_search",
+  "enabled": true,
+  "priority": 2,
+  "minFirmwareVersion": "1.5.1",
+  "permissions": [
+    "display",
+    "input",
+    "storage"
+  ]
+}

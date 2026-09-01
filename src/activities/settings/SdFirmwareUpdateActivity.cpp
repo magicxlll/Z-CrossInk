@@ -15,6 +15,15 @@
 #include "fontIds.h"
 #include "network/FirmwareFlasher.h"
 
+#ifdef SIMULATOR
+namespace firmware_flash {
+Result flashFromSdPath(const char* sdPath, ProgressCb onProgress, void* ctx) {
+  if (onProgress) onProgress(100, 100, ctx);
+  return Result::OK;
+}
+}
+#endif
+
 void SdFirmwareUpdateActivity::onEnter() {
   Activity::onEnter();
   // Build-identity marker — confirms which firmware build owns the SD update flow.

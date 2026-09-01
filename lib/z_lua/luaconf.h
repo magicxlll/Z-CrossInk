@@ -8,11 +8,6 @@
 #ifndef luaconf_h
 #define luaconf_h
 
-#ifdef __cplusplus
-#include <climits>
-#include <cstdint>
-#include <cstddef>
-#endif
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>

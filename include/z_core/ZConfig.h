@@ -15,8 +15,12 @@ constexpr const char* PLUGINS_PRIMARY_DIR = "/.crosspoint/plugins";
 constexpr const char* PLUGINS_SD_DIR = "/plugins";
 constexpr const char* SAFE_MODE_FLAG_PATH = "/.crosspoint/safemode.flag";
 
-// Safety limits for ESP32-C3 embedded runtime (guaranteeing zero heap exhaustion)
-constexpr uint32_t MAX_PLUGIN_HEAP_BYTES = 32 * 1024;      // 32KB max allocations for Lua sandbox
+// Safety limits for embedded runtime & simulator
+#if defined(SIMULATOR)
+constexpr uint32_t MAX_PLUGIN_HEAP_BYTES = 1024 * 1024;    // 1MB max allocations for Desktop Simulator
+#else
+constexpr uint32_t MAX_PLUGIN_HEAP_BYTES = 96 * 1024;      // 96KB max allocations for ESP32-C3
+#endif
 constexpr uint8_t MAX_ACTIVE_PLUGINS = 12;                 // Max concurrent registered plugins
 constexpr uint32_t SAFE_BOOT_CRASH_THRESHOLD = 3;          // 3 crashes trigger auto Safe-Mode
 

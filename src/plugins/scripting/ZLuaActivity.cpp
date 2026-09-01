@@ -1,5 +1,6 @@
 #include "ZLuaActivity.h"
 #include "ZLuaBindings.h"
+#include "../../fontIds.h"
 #include <Logging.h>
 
 ZLuaActivity::ZLuaActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
@@ -16,15 +17,20 @@ void ZLuaActivity::onEnter() {
 
   if (engine->init()) {
     if (!scriptPath.empty()) {
-      engine->runFile(scriptPath);
+      if (!engine->runFile(scriptPath)) {
+        scriptLoaded = false;
+        LOG_ERR("ZLUA", "Failed to load/execute script: %s", scriptPath.c_str());
+      } else {
+        scriptLoaded = true;
+        engine->callFunction("onEnter");
+      }
     }
-    engine->callFunction("onEnter");
   }
   requestUpdate(true);
 }
 
 void ZLuaActivity::onExit() {
-  if (engine) {
+  if (engine && scriptLoaded) {
     engine->callFunction("onExit");
     engine->shutdown();
   }
@@ -33,8 +39,16 @@ void ZLuaActivity::onExit() {
 
 void ZLuaActivity::render(RenderLock&& lock) {
   ZLuaBindings::setCurrentContext(&renderer, &activityManager, &mappedInput);
-  if (engine) {
+  if (engine && scriptLoaded) {
     engine->callFunction("onRender");
+  } else {
+    renderer.clearScreen();
+    renderer.drawText(LEXENDDECA_14_FONT_ID, 30, 50, "Z-CROSSINK SCRIPT ENGINE");
+    renderer.drawLine(20, 75, renderer.getScreenWidth() - 20, 75, 0);
+    renderer.drawText(UI_12_FONT_ID, 30, 110, "Loi nap tap tin Plugin:");
+    renderer.drawText(UI_10_FONT_ID, 30, 140, scriptPath.c_str());
+    renderer.drawText(UI_10_FONT_ID, 30, 180, "Vui long kiem tra cu phap hoac bo nho RAM.");
+    renderer.drawText(UI_10_FONT_ID, 30, renderer.getScreenHeight() - 50, "[Nhan BACK de thoat]");
   }
   renderer.displayBuffer();
 }

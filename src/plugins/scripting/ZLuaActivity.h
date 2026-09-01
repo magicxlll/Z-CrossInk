@@ -9,6 +9,7 @@ private:
   ZPluginManifest manifest;
   std::shared_ptr<ZLuaEngine> engine;
   std::string scriptPath;
+  bool scriptLoaded = false;
 
 public:
   ZLuaActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,

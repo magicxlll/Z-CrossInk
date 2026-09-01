@@ -639,6 +639,10 @@ int HomeActivity::getMenuItemCount() const {
   if (hasBookmarks || hasClippings) {
     count++;
   }
+#ifdef Z_CROSSINK_BUILD
+  auto plugins = ZPluginManager::getInstance().getHomePlugins();
+  count += std::min(static_cast<size_t>(8), plugins.size());
+#endif
   return count;
 }
 

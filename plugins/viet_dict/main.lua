@@ -194,27 +194,50 @@ function onEnter()
     print("[VietDict] Entered Vietnamese-English dictionary")
 end
 
+local function wrapLines(text, maxChars)
+    maxChars = maxChars or 40
+    if not text or #text <= maxChars then
+        return { text or "" }
+    end
+    local lines = {}
+    local currentLine = ""
+    for word in text:gmatch("%S+") do
+        if #currentLine == 0 then
+            currentLine = word
+        elseif #(currentLine .. " " .. word) <= maxChars then
+            currentLine = currentLine .. " " .. word
+        else
+            table.insert(lines, currentLine)
+            currentLine = word
+        end
+    end
+    if #currentLine > 0 then
+        table.insert(lines, currentLine)
+    end
+    return lines
+end
+
 local function drawListView(w, h)
     -- 1. Header Box
-    ZInk.Display.drawRect(20, 20, w - 40, 56, false)
-    ZInk.Display.drawText(36, 56, "TU DIEN VIET - ANH OFFLINE", "BOLD", 16)
-    ZInk.Display.drawText(w - 180, 56, "E-INK X3", "REGULAR", 12)
-    ZInk.Display.drawLine(20, 86, w - 40, 86)
+    ZInk.Display.drawRect(20, 20, w - 40, 52, false)
+    ZInk.Display.drawText(36, 54, "TU DIEN VIET - ANH OFFLINE", "BOLD", 15)
+    ZInk.Display.drawText(w - 140, 54, "E-INK X3", "REGULAR", 12)
+    ZInk.Display.drawLine(20, 84, w - 40, 84)
 
     -- 2. Subheader & Stats
     local totalWords = #dictionaryData
     local totalPages = math.ceil(totalWords / pageSize)
     currentPage = math.ceil(selectedIndex / pageSize)
 
-    local subY = 110
-    ZInk.Display.drawText(26, subY, "Tra cuu nhanh (" .. tostring(totalWords) .. " tu)  •  Trang " .. tostring(currentPage) .. "/" .. tostring(totalPages), "REGULAR", 12)
+    local subY = 108
+    ZInk.Display.drawText(26, subY, "Tra cuu (" .. tostring(totalWords) .. " tu)  •  Trang " .. tostring(currentPage) .. "/" .. tostring(totalPages), "REGULAR", 12)
     ZInk.Display.drawLine(20, subY + 12, w - 40, subY + 12)
 
     -- 3. Render Page Items
     local startIdx = (currentPage - 1) * pageSize + 1
     local endIdx = math.min(startIdx + pageSize - 1, totalWords)
-    local startY = 145
-    local rowHeight = 75
+    local startY = 140
+    local rowHeight = 72
 
     for i = startIdx, endIdx do
         local slot = i - startIdx
@@ -222,24 +245,25 @@ local function drawListView(w, h)
         local item = dictionaryData[i]
         local isSelected = (i == selectedIndex)
 
+        local shortEn = #item.en > 32 and (item.en:sub(1, 30) .. "...") or item.en
+
         if isSelected then
-            -- Inverted selection container
-            ZInk.Display.drawRect(22, y, w - 44, 65, true)
-            ZInk.Display.drawText(40, y + 26, tostring(i) .. ". " .. item.word, "BOLD", 14)
-            ZInk.Display.drawText(40, y + 50, "-> " .. item.en, "REGULAR", 12)
-            ZInk.Display.drawText(w - 150, y + 26, item.pos, "REGULAR", 10)
+            ZInk.Display.drawRect(22, y, w - 44, 62, true)
+            ZInk.Display.drawText(38, y + 24, tostring(i) .. ". " .. item.word, "BOLD", 14)
+            ZInk.Display.drawText(38, y + 46, "-> " .. shortEn, "REGULAR", 11)
+            ZInk.Display.drawText(w - 140, y + 24, item.pos, "REGULAR", 10)
         else
-            ZInk.Display.drawRect(22, y, w - 44, 65, false)
-            ZInk.Display.drawText(40, y + 26, tostring(i) .. ". " .. item.word, "BOLD", 14)
-            ZInk.Display.drawText(40, y + 50, "-> " .. item.en, "REGULAR", 12)
-            ZInk.Display.drawText(w - 150, y + 26, item.pos, "REGULAR", 10)
+            ZInk.Display.drawRect(22, y, w - 44, 62, false)
+            ZInk.Display.drawText(38, y + 24, tostring(i) .. ". " .. item.word, "BOLD", 14)
+            ZInk.Display.drawText(38, y + 46, "-> " .. shortEn, "REGULAR", 11)
+            ZInk.Display.drawText(w - 140, y + 24, item.pos, "REGULAR", 10)
         end
     end
 
     -- 4. Footer Guide
     local footY = h - 60
     ZInk.Display.drawLine(20, footY, w - 40, footY)
-    ZInk.Display.drawText(30, footY + 36, "[Len/Xuong: Chon tu | Confirm: Xem nghia | Back: Thoat]", "REGULAR", 10)
+    ZInk.Display.drawText(30, footY + 36, "[Len/Xuong: Chon | Confirm: Xem nghia | Back: Thoat]", "REGULAR", 10)
 end
 
 local function drawDetailView(w, h)
@@ -247,45 +271,62 @@ local function drawDetailView(w, h)
     if not item then return end
 
     -- 1. Header Box
-    ZInk.Display.drawRect(20, 20, w - 40, 56, false)
-    ZInk.Display.drawText(36, 56, "CHI TIET TU VUNG", "BOLD", 16)
-    ZInk.Display.drawText(w - 150, 56, "[" .. tostring(selectedIndex) .. "/" .. tostring(#dictionaryData) .. "]", "REGULAR", 12)
-    ZInk.Display.drawLine(20, 86, w - 40, 86)
+    ZInk.Display.drawRect(20, 20, w - 40, 52, false)
+    ZInk.Display.drawText(36, 54, "CHI TIET TU VUNG", "BOLD", 15)
+    ZInk.Display.drawText(w - 140, 54, "[" .. tostring(selectedIndex) .. "/" .. tostring(#dictionaryData) .. "]", "REGULAR", 12)
+    ZInk.Display.drawLine(20, 84, w - 40, 84)
 
     -- 2. Word Card Banner
-    local cardY = 105
-    ZInk.Display.drawRect(24, cardY, w - 48, 70, false)
-    ZInk.Display.drawText(40, cardY + 34, item.word, "BOLD", 20)
-    ZInk.Display.drawText(40, cardY + 56, item.phonetic .. "  •  " .. item.pos, "REGULAR", 12)
+    local cardY = 100
+    ZInk.Display.drawRect(24, cardY, w - 48, 64, false)
+    ZInk.Display.drawText(38, cardY + 30, item.word, "BOLD", 18)
+    ZInk.Display.drawText(38, cardY + 52, item.phonetic .. "  •  " .. item.pos, "REGULAR", 11)
 
-    -- 3. English Meaning Box
-    local enY = cardY + 85
-    ZInk.Display.drawRect(24, enY, w - 48, 55, true)
-    ZInk.Display.drawText(38, enY + 24, "ENGLISH DEFINITION:", "BOLD", 10)
-    ZInk.Display.drawText(38, enY + 44, item.en, "BOLD", 13)
-
-    -- 4. Vietnamese Meanings
-    local vnY = enY + 70
-    ZInk.Display.drawText(28, vnY, "Giai nghia tieng Viet:", "BOLD", 13)
-    ZInk.Display.drawLine(28, vnY + 6, 200, vnY + 6)
-
-    local curY = vnY + 30
-    for idx, def in ipairs(item.meanings) do
-        ZInk.Display.drawText(34, curY, tostring(idx) .. ". " .. def, "REGULAR", 12)
-        curY = curY + 28
+    -- 3. English Meaning Box with auto-wrap
+    local enY = cardY + 76
+    local enLines = wrapLines(item.en, 36)
+    local enBoxHeight = 32 + #enLines * 22
+    ZInk.Display.drawRect(24, enY, w - 48, enBoxHeight, false)
+    ZInk.Display.drawText(36, enY + 20, "ENGLISH DEFINITIONS:", "BOLD", 10)
+    for lIdx, line in ipairs(enLines) do
+        ZInk.Display.drawText(36, enY + 20 + lIdx * 20, "• " .. line, "BOLD", 12)
     end
 
-    -- 5. Example Box
-    local exY = curY + 20
-    ZInk.Display.drawRect(24, exY, w - 48, 110, false)
-    ZInk.Display.drawText(38, exY + 26, "Vi du minh hoa (Examples):", "BOLD", 12)
-    ZInk.Display.drawText(38, exY + 54, "• VN: \"" .. item.example .. "\"", "REGULAR", 11)
-    ZInk.Display.drawText(38, exY + 84, "• EN: \"" .. item.exampleEn .. "\"", "REGULAR", 11)
+    -- 4. Vietnamese Meanings with auto-wrap
+    local vnY = enY + enBoxHeight + 14
+    ZInk.Display.drawText(26, vnY, "Giai nghia tieng Viet:", "BOLD", 12)
+    ZInk.Display.drawLine(26, vnY + 4, 170, vnY + 4)
+
+    local curY = vnY + 24
+    for idx, def in ipairs(item.meanings) do
+        local defLines = wrapLines(tostring(idx) .. ". " .. def, 40)
+        for _, dLine in ipairs(defLines) do
+            ZInk.Display.drawText(32, curY, dLine, "REGULAR", 11)
+            curY = curY + 20
+        end
+    end
+
+    -- 5. Example Box with auto-wrap
+    local exY = curY + 8
+    local vnExLines = wrapLines("• VN: \"" .. item.example .. "\"", 40)
+    local enExLines = wrapLines("• EN: \"" .. item.exampleEn .. "\"", 40)
+    local exBoxHeight = 32 + (#vnExLines + #enExLines) * 20
+    ZInk.Display.drawRect(24, exY, w - 48, exBoxHeight, false)
+    ZInk.Display.drawText(36, exY + 20, "Vi du minh hoa (Examples):", "BOLD", 10)
+    local exLineY = exY + 40
+    for _, l in ipairs(vnExLines) do
+        ZInk.Display.drawText(36, exLineY, l, "REGULAR", 10)
+        exLineY = exLineY + 20
+    end
+    for _, l in ipairs(enExLines) do
+        ZInk.Display.drawText(36, exLineY, l, "REGULAR", 10)
+        exLineY = exLineY + 20
+    end
 
     -- 6. Navigation Footer
     local footY = h - 60
     ZInk.Display.drawLine(20, footY, w - 40, footY)
-    ZInk.Display.drawText(30, footY + 36, "[Trai/Phai: Tu truoc/sau | Confirm/Back: Tro lai danh sach]", "REGULAR", 10)
+    ZInk.Display.drawText(30, footY + 36, "[Trai/Phai: Tu khac | Confirm/Back: Quay lai]", "REGULAR", 10)
 end
 
 function onRender()

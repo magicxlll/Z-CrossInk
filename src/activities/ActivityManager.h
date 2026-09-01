@@ -171,6 +171,9 @@ class ActivityManager {
   // Returns Rejected when a synchronous render would be unsafe, such as from the render task,
   // while another task is already waiting, or while holding a RenderLock.
   RequestUpdateResult requestUpdateAndWait();
+
+  GfxRenderer& getRenderer() { return renderer; }
+  MappedInputManager& getMappedInput() { return mappedInput; }
 };
 
 extern ActivityManager activityManager;  // singleton, to be defined in main.cpp

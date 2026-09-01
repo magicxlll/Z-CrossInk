@@ -1,0 +1,15 @@
+{
+  "id": "hello",
+  "name": "Hello World",
+  "version": "1.0.0",
+  "entry": "main.lua",
+  "category": "HOME_APP",
+  "minZCrossInkVersion": "1.5.1",
+  "permissions": [
+    "display",
+    "input"
+  ],
+  "author": "Z-CrossInk Engineering Team",
+  "description": "Minimal baseline reference plugin for Phase P1 qualification.",
+  "enabled": true
+}

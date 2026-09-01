@@ -298,6 +298,8 @@ void ZLuaBindings::registerAll(lua_State* L, GfxRenderer* renderer, ActivityMana
   lua_setfield(L, -2, "getWidth");
   lua_pushcfunction(L, l_display_get_height);
   lua_setfield(L, -2, "getHeight");
+  lua_pushcfunction(L, l_display_clear);
+  lua_setfield(L, -2, "refresh");
   lua_setfield(L, -2, "Display");
 
   // ZInk.Storage
@@ -316,12 +318,16 @@ void ZLuaBindings::registerAll(lua_State* L, GfxRenderer* renderer, ActivityMana
   lua_setfield(L, -2, "getBatteryPercent");
   lua_pushcfunction(L, l_system_get_battery_mv);
   lua_setfield(L, -2, "getBatteryMv");
+  lua_pushcfunction(L, l_system_get_battery_mv);
+  lua_setfield(L, -2, "getBatteryVoltage");
   lua_pushcfunction(L, l_system_is_charging);
   lua_setfield(L, -2, "isCharging");
   lua_pushcfunction(L, l_system_get_free_heap);
   lua_setfield(L, -2, "getFreeHeap");
   lua_pushcfunction(L, l_system_get_uptime);
   lua_setfield(L, -2, "getUptimeSeconds");
+  lua_pushcfunction(L, l_system_get_uptime);
+  lua_setfield(L, -2, "getUptime");
   lua_pushcfunction(L, l_system_get_firmware_version);
   lua_setfield(L, -2, "getFirmwareVersion");
   lua_pushcfunction(L, l_system_get_device_model);

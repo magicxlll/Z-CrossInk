@@ -36,6 +36,7 @@ void ZLuaActivity::render(RenderLock&& lock) {
   if (engine) {
     engine->callFunction("onRender");
   }
+  renderer.displayBuffer();
 }
 
 void ZLuaActivity::loop() {
